@@ -15,4 +15,3 @@ if [ $stage -eq 0 ]; then
     # Extract text feats
     python src/utils/feats/text_feats.py -i $data_dir
 fi
-

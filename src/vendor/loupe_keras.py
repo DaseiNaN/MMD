@@ -1,14 +1,11 @@
-""" This code is modified from the following paper.
-Learnable mOdUle for Pooling fEatures (LOUPE)
-Contains a collection of models (NetVLAD, NetRVLAD, NetFV and Soft-DBoW)
-which enables pooling of a list of features into a single compact 
-representation.
+"""This code is modified from the following paper. Learnable mOdUle for Pooling fEatures (LOUPE)
+Contains a collection of models (NetVLAD, NetRVLAD, NetFV and Soft-DBoW) which enables pooling of a
+list of features into a single compact representation.
 
 Reference:
 
 Learnable pooling method with Context Gating for video classification
 Antoine Miech, Ivan Laptev, Josef Sivic
-
 """
 import math
 import sys
@@ -22,10 +19,9 @@ from keras import initializers, layers
 # Keras version
 
 class ContextGating(layers.Layer):
-    """Creates a NetVLAD class.
-    """
+    """Creates a NetVLAD class."""
     def __init__(self, **kwargs):
-        
+
         super(ContextGating, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -38,7 +34,7 @@ class ContextGating(layers.Layer):
                                       shape=(input_shape[-1],),
                                       initializer=tf.random_normal_initializer(stddev=1 / math.sqrt(input_shape[-1])),
                                       trainable=True)
-        
+
         super(ContextGating, self).build(input_shape)  # Be sure to call this at the end
 
     def call(self, inputs):
@@ -46,10 +42,10 @@ class ContextGating(layers.Layer):
         In Keras, there are two way to do matrix multiplication (dot product)
         1) K.dot : AxB -> when A has batchsize and B doesn't, use K.dot
         2) tf.matmul: AxB -> when A and B both have batchsize, use tf.matmul
-        
+
         Error example: Use tf.matmul when A has batchsize (3 dim) and B doesn't (2 dim)
         ValueError: Shape must be rank 2 but is rank 3 for 'net_vlad_1/MatMul' (op: 'MatMul') with input shapes: [?,21,64], [64,3]
-        
+
         tf.matmul might still work when the dim of A is (?,64), but this is too confusing.
         Just follow the above rules.
         """
@@ -66,10 +62,9 @@ class ContextGating(layers.Layer):
 
 
 class NetVLAD(layers.Layer):
-    """Creates a NetVLAD class.
-    """
+    """Creates a NetVLAD class."""
     def __init__(self, feature_size, max_samples, cluster_size, output_dim, **kwargs):
-        
+
         self.feature_size = feature_size
         self.max_samples = max_samples
         self.output_dim = output_dim
@@ -94,7 +89,7 @@ class NetVLAD(layers.Layer):
                                       shape=(self.cluster_size*self.feature_size, self.output_dim),
                                       initializer=tf.random_normal_initializer(stddev=1 / math.sqrt(self.cluster_size)),
                                       trainable=True)
-        
+
         super(NetVLAD, self).build(input_shape)  # Be sure to call this at the end
 
     def call(self, reshaped_input):
@@ -115,28 +110,28 @@ class NetVLAD(layers.Layer):
         In Keras, there are two way to do matrix multiplication (dot product)
         1) K.dot : AxB -> when A has batchsize and B doesn't, use K.dot
         2) tf.matmul: AxB -> when A and B both have batchsize, use tf.matmul
-        
+
         Error example: Use tf.matmul when A has batchsize (3 dim) and B doesn't (2 dim)
         ValueError: Shape must be rank 2 but is rank 3 for 'net_vlad_1/MatMul' (op: 'MatMul') with input shapes: [?,21,64], [64,3]
-        
+
         tf.matmul might still work when the dim of A is (?,64), but this is too confusing.
         Just follow the above rules.
         """
         activation = K.dot(reshaped_input, self.cluster_weights)
-        
+
         activation += self.cluster_biases
-        
+
         activation = tf.nn.softmax(activation)
 
         activation = tf.reshape(activation,
                 [-1, self.max_samples, self.cluster_size])
 
         a_sum = tf.reduce_sum(activation,-2,keepdims=True)
-        
+
         a = tf.multiply(a_sum,self.cluster_weights2)
-        
+
         activation = tf.transpose(activation,perm=[0,2,1])
-        
+
         reshaped_input = tf.reshape(reshaped_input,[-1,
             self.max_samples, self.feature_size])
 
@@ -157,16 +152,15 @@ class NetVLAD(layers.Layer):
 
 
 class NetRVLAD(layers.Layer):
-    """Creates a NetRVLAD class (Residual-less NetVLAD).
-    """
+    """Creates a NetRVLAD class (Residual-less NetVLAD)."""
     def __init__(self, feature_size, max_samples, cluster_size, output_dim, **kwargs):
-        
+
         self.feature_size = feature_size
         self.max_samples = max_samples
         self.output_dim = output_dim
         self.cluster_size = cluster_size
         super(NetRVLAD, self).__init__(**kwargs)
-    
+
     def build(self, input_shape):
     # Create a trainable weight variable for this layer.
         self.cluster_weights = self.add_weight(name='kernel_W1',
@@ -181,7 +175,7 @@ class NetRVLAD(layers.Layer):
                                       shape=(self.cluster_size*self.feature_size, self.output_dim),
                                       initializer=tf.random_normal_initializer(stddev=1 / math.sqrt(self.cluster_size)),
                                       trainable=True)
-        
+
         super(NetRVLAD, self).build(input_shape)  # Be sure to call this at the end
 
     def call(self, reshaped_input):
@@ -202,24 +196,24 @@ class NetRVLAD(layers.Layer):
         In Keras, there are two way to do matrix multiplication (dot product)
         1) K.dot : AxB -> when A has batchsize and B doesn't, use K.dot
         2) tf.matmul: AxB -> when A and B both have batchsize, use tf.matmul
-        
+
         Error example: Use tf.matmul when A has batchsize (3 dim) and B doesn't (2 dim)
         ValueError: Shape must be rank 2 but is rank 3 for 'net_vlad_1/MatMul' (op: 'MatMul') with input shapes: [?,21,64], [64,3]
-        
+
         tf.matmul might still work when the dim of A is (?,64), but this is too confusing.
         Just follow the above rules.
         """
         activation = K.dot(reshaped_input, self.cluster_weights)
-        
+
         activation += self.cluster_biases
-        
+
         activation = tf.nn.softmax(activation)
 
         activation = tf.reshape(activation,
                 [-1, self.max_samples, self.cluster_size])
 
         activation = tf.transpose(activation,perm=[0,2,1])
-        
+
         reshaped_input = tf.reshape(reshaped_input,[-1,
             self.max_samples, self.feature_size])
 
@@ -237,10 +231,9 @@ class NetRVLAD(layers.Layer):
 
 
 class SoftDBoW(layers.Layer):
-    """Creates a Soft Deep Bag-of-Features class.
-    """
+    """Creates a Soft Deep Bag-of-Features class."""
     def __init__(self, feature_size, max_samples, cluster_size, output_dim, **kwargs):
-        
+
         self.feature_size = feature_size
         self.max_samples = max_samples
         self.output_dim = output_dim
@@ -281,17 +274,17 @@ class SoftDBoW(layers.Layer):
         In Keras, there are two way to do matrix multiplication (dot product)
         1) K.dot : AxB -> when A has batchsize and B doesn't, use K.dot
         2) tf.matmul: AxB -> when A and B both have batchsize, use tf.matmul
-        
+
         Error example: Use tf.matmul when A has batchsize (3 dim) and B doesn't (2 dim)
         ValueError: Shape must be rank 2 but is rank 3 for 'net_vlad_1/MatMul' (op: 'MatMul') with input shapes: [?,21,64], [64,3]
-        
+
         tf.matmul might still work when the dim of A is (?,64), but this is too confusing.
         Just follow the above rules.
         """
         activation = K.dot(reshaped_input, self.cluster_weights)
-        
+
         activation += self.cluster_biases
-        
+
         activation = tf.nn.softmax(activation)
 
         activation = tf.reshape(activation,
@@ -308,10 +301,9 @@ class SoftDBoW(layers.Layer):
 
 
 class NetFV(layers.Layer):
-    """Creates a NetVLAD class.
-    """
+    """Creates a NetVLAD class."""
     def __init__(self, feature_size, max_samples, cluster_size, output_dim, **kwargs):
-        
+
         self.feature_size = feature_size
         self.max_samples = max_samples
         self.output_dim = output_dim
@@ -360,10 +352,10 @@ class NetFV(layers.Layer):
         In Keras, there are two way to do matrix multiplication (dot product)
         1) K.dot : AxB -> when A has batchsize and B doesn't, use K.dot
         2) tf.matmul: AxB -> when A and B both have batchsize, use tf.matmul
-        
+
         Error example: Use tf.matmul when A has batchsize (3 dim) and B doesn't (2 dim)
         ValueError: Shape must be rank 2 but is rank 3 for 'net_vlad_1/MatMul' (op: 'MatMul') with input shapes: [?,21,64], [64,3]
-        
+
         tf.matmul might still work when the dim of A is (?,64), but this is too confusing.
         Just follow the above rules.
         """
@@ -373,20 +365,20 @@ class NetFV(layers.Layer):
         covar_weights = tf.add(covar_weights,eps)
 
         activation = K.dot(reshaped_input, self.cluster_weights)
-        
+
         activation += self.cluster_biases
-        
+
         activation = tf.nn.softmax(activation)
 
         activation = tf.reshape(activation,
                 [-1, self.max_samples, self.cluster_size])
 
         a_sum = tf.reduce_sum(activation,-2,keepdims=True)
-        
+
         a = tf.multiply(a_sum,self.cluster_weights2)
-        
+
         activation = tf.transpose(activation,perm=[0,2,1])
-        
+
         reshaped_input = tf.reshape(reshaped_input,[-1,
             self.max_samples, self.feature_size])
 
@@ -394,11 +386,11 @@ class NetFV(layers.Layer):
         fv1 = tf.transpose(fv1,perm=[0,2,1])
 
         # computing second order FV
-        a2 = tf.multiply(a_sum,tf.square(self.cluster_weights2)) 
+        a2 = tf.multiply(a_sum,tf.square(self.cluster_weights2))
 
-        b2 = tf.multiply(fv1,self.cluster_weights2) 
-        fv2 = tf.matmul(activation,tf.square(reshaped_input)) 
-     
+        b2 = tf.multiply(fv1,self.cluster_weights2)
+        fv2 = tf.matmul(activation,tf.square(reshaped_input))
+
         fv2 = tf.transpose(fv2,perm=[0,2,1])
         fv2 = tf.add_n([a2,fv2,tf.scalar_mul(-2,b2)])
 
@@ -406,13 +398,13 @@ class NetFV(layers.Layer):
         fv2 = tf.subtract(fv2,a_sum)
 
         fv2 = tf.reshape(fv2,[-1,self.cluster_size*self.feature_size])
-      
+
         fv2 = tf.nn.l2_normalize(fv2,1)
         fv2 = tf.reshape(fv2,[-1,self.cluster_size*self.feature_size])
         fv2 = tf.nn.l2_normalize(fv2,1)
 
         fv1 = tf.subtract(fv1,a)
-        fv1 = tf.divide(fv1,covar_weights) 
+        fv1 = tf.divide(fv1,covar_weights)
 
         fv1 = tf.nn.l2_normalize(fv1,1)
         fv1 = tf.reshape(fv1,[-1,self.cluster_size*self.feature_size])
