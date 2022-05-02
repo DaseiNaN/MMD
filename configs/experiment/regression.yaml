@@ -1,0 +1,43 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /datamodule: eatd.yaml
+  - override /model: regression.yaml
+  - override /callbacks: regression.yaml
+  - override /logger: wandb.yaml
+  - override /trainer: default.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+# name of the run determines folder name in logs
+name: "name"
+
+seed: 308
+
+trainer:
+  min_epochs: 10
+  max_epochs: 100
+
+model:
+  lr: !!float 1e-5
+  weight_decay: 0
+  optimizer: "adam"
+  net:
+    # _target_: src.models.components.regression.audio_bilstm_net.AudioBiLSTMNet
+    num_classes: 1
+    dropout: !!float 0.5
+    num_layers: 2
+    hidden_size: 256
+    embed_size: 256
+    bidirectional: True
+
+datamodule:
+  data_type: "audio"
+
+logger:
+  wandb:
+    tags: ["${name}"]

@@ -43,6 +43,7 @@ class ClassificationModule(LightningModule):
 
         self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         self.log("train/accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("train/f1_score", f1_score, on_step=False, on_epoch=True, prog_bar=True)
         self.log_table(key="train", columns=columns, data=data)
         return {"loss": loss}
 
@@ -59,6 +60,7 @@ class ClassificationModule(LightningModule):
 
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         self.log("val/accuracy", accuracy, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/f1_score", f1_score, on_step=False, on_epoch=True, prog_bar=True)
         self.log_table(key="val", columns=columns, data=data)
         return {"loss": loss, "preds": y_pred, "targets": y_true}
 

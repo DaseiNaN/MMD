@@ -7,7 +7,7 @@ from pytorch_lightning import LightningModule
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 
-class ClassificationModule(LightningModule):
+class RegressionModule(LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,

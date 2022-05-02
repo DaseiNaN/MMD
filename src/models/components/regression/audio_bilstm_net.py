@@ -5,11 +5,12 @@ import torch.nn as nn
 class AudioBiLSTMNet(nn.Module):
     def __init__(
         self,
-        num_classes: int = 2,
+        num_classes: int = 1,
         dropout: float = 0.5,
         num_layers: int = 2,
         hidden_size: int = 256,
         embed_size: int = 256,
+        bidirectional: bool = True,
     ):
         super(AudioBiLSTMNet, self).__init__()
 
@@ -17,7 +18,6 @@ class AudioBiLSTMNet(nn.Module):
             nn.Linear(in_features=hidden_size, out_features=hidden_size), nn.ReLU(inplace=True)
         )
 
-        self.layer_norm = nn.LayerNorm(embed_size)
         self.gru_layer = nn.GRU(
             input_size=embed_size,
             hidden_size=hidden_size,
@@ -32,13 +32,12 @@ class AudioBiLSTMNet(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(in_features=hidden_size, out_features=num_classes),
-            nn.Softmax(dim=1),
+            nn.ReLU(),
         )
 
     def forward(self, x):
-        x = self.layer_norm(x)
         x, _ = self.gru_layer(x)
-        x = x.mean(dim=1)
+        x = x.sum(dim=1)
         y = self.linear_layer(x)
         return y
 

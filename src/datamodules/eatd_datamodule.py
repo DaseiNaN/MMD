@@ -26,7 +26,7 @@ class BaseKFoldDataModule(LightningDataModule, ABC):
 class EATDKFoldDataModule(BaseKFoldDataModule):
     def __init__(self, data_dir: str, data_type: str):
         super(EATDKFoldDataModule, self).__init__()
-
+        assert data_type in ["audio", "text", "fuse"]
         # this line allows to access init params with 'self.hparams' attribute
         self.save_hyperparameters(logger=False)
 
