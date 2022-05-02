@@ -4,30 +4,36 @@ import torch.nn.functional as F
 
 
 class TextBiLSTMNet(nn.Module):
-    def __init__(self,
-                 num_classes:int =2,
-                 dropout:float =0.5,
-                 num_layers:int =2,
-                 hidden_size:int =128,
-                 embed_size:int =1024,
-                 bidirectional:bool =True):
+    def __init__(
+        self,
+        num_classes: int = 2,
+        dropout: float = 0.5,
+        num_layers: int = 2,
+        hidden_size: int = 128,
+        embed_size: int = 1024,
+        bidirectional: bool = True,
+    ):
         super(TextBiLSTMNet, self).__init__()
 
         self.attention_layer = nn.Sequential(
-            nn.Linear(in_features=hidden_size, out_features=hidden_size),
-            nn.ReLU(inplace=True)
+            nn.Linear(in_features=hidden_size, out_features=hidden_size), nn.ReLU(inplace=True)
         )
 
-        self.lstm_layer = nn.LSTM(input_size=embed_size, hidden_size=hidden_size, \
-                                  num_layers=num_layers, dropout=dropout, \
-                                  bidirectional=bidirectional, batch_first=True)
+        self.lstm_layer = nn.LSTM(
+            input_size=embed_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            dropout=dropout,
+            bidirectional=bidirectional,
+            batch_first=True,
+        )
 
         self.linear_layer = nn.Sequential(
             nn.Linear(in_features=hidden_size, out_features=hidden_size),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(in_features=hidden_size, out_features=num_classes),
-            nn.Softmax(dim=1)
+            nn.Softmax(dim=1),
         )
 
     def attention_with_w(self, lstm_out, lstm_hidden):
@@ -38,7 +44,7 @@ class TextBiLSTMNet(nn.Module):
         attn_weights = self.attention_layer(lstm_hidden)
 
         m = nn.Tanh()(h)
-        context = attn_weights @ m.transpose(1,2)
+        context = attn_weights @ m.transpose(1, 2)
         softmax_weights = F.softmax(context, dim=-1)
 
         context = (softmax_weights @ h).squeeze(dim=1)
@@ -51,7 +57,7 @@ class TextBiLSTMNet(nn.Module):
         return y
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     model = TextBiLSTMNet()
     x = torch.randn((10, 3, 1024))
     y = model(x)

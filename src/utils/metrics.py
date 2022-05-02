@@ -3,7 +3,7 @@ from sklearn.metrics import confusion_matrix
 
 
 def standard_confusion_matrix(y_true, y_pred):
-    """ Standard confusion matrix
+    """Standard confusion matrix
 
     ====================================
     |                |      Truth      |
