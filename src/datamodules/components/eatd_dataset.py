@@ -33,9 +33,14 @@ class EATDDataset(Dataset):
 
     def __getitem__(self, index: int):
         if self.data_type == "fuse":
-            return self.audio_feats[index], self.text_feats[index], self.targets[index]
+            return (
+                self.audio_feats[index],
+                self.text_feats[index],
+                self.targets[index],
+                self.y[index],
+            )
         else:
-            return self.feats[index], self.targets[index]
+            return self.feats[index], self.targets[index], self.y[index]
 
 
 if __name__ == "__main__":
