@@ -69,6 +69,12 @@ def train(config: DictConfig) -> Optional[float]:
         config.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
     )
 
+    # Init KFold Loop
+    if config.get("kfold"):
+        internal_fit_loop = trainer.fit_loop
+        trainer.fit_loop = utils.KFoldLoop(config.kfold_loop)
+        trainer.fit_loop.connect(internal_fit_loop)
+
     # Send some parameters from config to all lightning loggers
     log.info("Logging hyperparameters!")
     utils.log_hyperparameters(

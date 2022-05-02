@@ -145,6 +145,6 @@ data/
 logs/
 wandb/
 notebooks/
-# thirdparty/
+thirdparty/
 .env
 .autoenv
